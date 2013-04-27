@@ -1,49 +1,34 @@
 class Person:
-    instances = list()
-
     def __init__(self, name, gender, birth_year, father=None, mother=None):
         self.name = name
         self.gender = gender
         self.birth_year = birth_year
-        self.father = father
-        self.mother = mother
-        self.instances.append(self)
+        self.parents = (mother, father)
+        self.kids = []
 
-    def get_siblings(self, gender):
-        def we_have_common_parent(my, your):
-            return (my.father is your.father and my.father is not None or
-                    my.mother is your.mother and my.mother is not None)
+        for parent in self.parents:
+            if parent is not None:
+                parent.__add_child(self)
 
-        siblings_list = list()
+    def __add_child(self, child):
+        return self.kids.append(child)
 
-        for instance in self.instances:
-            if (we_have_common_parent(self, instance) and
-                    instance.gender == gender and instance is not self):
-                siblings_list.append(instance)
-
-        return siblings_list
+    def __get_siblings(self, gender):
+        siblings_plus_self = set([person for parent in self.parents
+                                  for person in parent.children(gender)])
+        return list(siblings_plus_self - {self})
 
     def get_brothers(self):
-        return self.get_siblings('M')
+        return self.__get_siblings('M')
 
     def get_sisters(self):
-        return self.get_siblings('F')
+        return self.__get_siblings('F')
 
     def children(self, gender=None):
-        def gender_filter(my_list, gender):
-            return filter(lambda instance: instance.gender == gender,
-                          my_list)
-
-        children_list = list()
-
-        for instance in self.instances:
-            if instance.father is self or instance.mother is self:
-                children_list.append(instance)
-
         if gender is not None:
-            return list(gender_filter(children_list, gender))
+            return [kid for kid in self.kids if kid.gender == gender]
         else:
-            return children_list
+            return self.kids
 
     def is_direct_successor(self, person):
-        return (person.mother is self or person.father is self)
+        return self in person.parents
