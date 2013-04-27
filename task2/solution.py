@@ -3,20 +3,23 @@ from collections import defaultdict, OrderedDict
 
 def groupby(func, seq):
     result = defaultdict(list)
+
     for element in seq:
         result[func(element)].append(element)
+
     return result
 
 
+def compose(func1, func2):
+    return lambda arg: func1(func2(arg))
+
+
 def iterate(func):
-    def repeated(n, arg):
-        for i in range(n):
-            arg = func(arg)
-        return arg
-    repeat = 0
+    iterated_function = lambda arg: arg
+
     while True:
-        yield lambda arg: repeated(repeat, arg)
-        repeat += 1
+        yield iterated_function
+        iterated_function = compose(func, iterated_function)
 
 
 def zip_with(func, *iterables):
@@ -25,15 +28,16 @@ def zip_with(func, *iterables):
 
 
 def cache(func, cache_size):
+    """Keep in cache the last `cache_size` unique calls of a `func`."""
     cache_storage = OrderedDict()
 
-    def check_and_modify_cache(arg):
-        if arg in cache_storage:
-            return cache_storage[arg]
+    def check_and_modify_cache(*args):
+        if args in cache_storage:
+            return cache_storage[args]
         else:
-            result = cache_storage[arg] = func(arg)
+            result = cache_storage[args] = func(*args)
             if len(cache_storage) > cache_size:
                 cache_storage.popitem(last=False)
             return result
 
-    return lambda arg: check_and_modify_cache(arg)
+    return check_and_modify_cache
