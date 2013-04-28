@@ -68,6 +68,7 @@ class TicTacToeBoard:
         self.__winner()
 
     def __winner(self):
+        """Check if there is a winner and change board status."""
         def all_equal(list):
             return list[0] != self.EMPTY and list == [list[0]] * len(list)
 
