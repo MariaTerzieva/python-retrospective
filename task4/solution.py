@@ -1,6 +1,3 @@
-from collections import defaultdict
-
-
 class InvalidMove(Exception):
     pass
 
@@ -18,72 +15,75 @@ class NotYourTurn(Exception):
 
 
 class TicTacToeBoard:
+    BOARD = '''
+  -------------
+3 | {A3} | {B3} | {C3} |
+  -------------
+2 | {A2} | {B2} | {C2} |
+  -------------
+1 | {A1} | {B1} | {C1} |
+  -------------
+    A   B   C  \n'''
+
+    WINNING_COMBINATIONS = [['A1', 'B1', 'C1'], ['A2', 'B2', 'C2'],
+                            ['A3', 'B3', 'C3'], ['A1', 'A2', 'A3'],
+                            ['B1', 'B2', 'B3'], ['C1', 'C2', 'C3'],
+                            ['A1', 'B2', 'C3'], ['C1', 'B2', 'A3']]
+
+    STATUS_X_WINS = 'X wins!'
+    STATUS_O_WINS = 'O wins!'
+    STATUS_DRAW = 'Draw!'
+    STATUS_GAME_IN_PROGRESS = 'Game in progress.'
+    EMPTY = ' '
+    X_SIGN = 'X'
+    O_SIGN = 'O'
+    SLOTS = ('A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3')
+
     def __init__(self):
-        self.board = dict(A1=' ', A2=' ', A3=' ',
-                          B1=' ', B2=' ', B3=' ',
-                          C1=' ', C2=' ', C3=' ')
-        self.last = 'dummy'
-        self.status = 'Game in progress.'
+        self._board = {slot: self.EMPTY for slot in self.SLOTS}
+        self._last = self.EMPTY
+        self._status = self.STATUS_GAME_IN_PROGRESS
 
     def __str__(self):
-        horizontal_line = ' '*2 + '-'*13 + '\n'
-        vertical_lines = '%s |' + ' %s |'*3 + '\n'
-        rows = defaultdict(str)
-
-        for i in range(1, 4):
-            rows[i] = vertical_lines % (i, self.board['A' + str(i)],
-                                        self.board['B' + str(i)],
-                                        self.board['C' + str(i)])
-
-        result = ('\n' + horizontal_line +
-                  rows[3] +
-                  horizontal_line +
-                  rows[2] +
-                  horizontal_line +
-                  rows[1] +
-                  horizontal_line + ' '*4 + 'A   B   C  \n')
-
-        return result
+        return self.BOARD.format(**self._board)
 
     def __getitem__(self, key):
-        return self.board[key]
+        if key not in self._board:
+            raise InvalidKey("Invalid key!")
+
+        return self._board[key]
 
     def __setitem__(self, key, value):
-        if key not in self.board:
-            raise InvalidKey
-        elif value != 'X' and value != 'O':
-            raise InvalidValue
-        elif self.board[key] != ' ':
-            raise InvalidMove
-        elif self.last == value:
-            raise NotYourTurn
-        self.last = value
-        self.board[key] = value
-        self.winner()
+        if key not in self._board:
+            raise InvalidKey("Invalid key!")
+        if value != self.X_SIGN and value != self.O_SIGN:
+            raise InvalidValue("Invalid value!")
+        if self._board[key] != self.EMPTY:
+            raise InvalidMove("Invalid move!")
+        if self._last == value:
+            raise NotYourTurn("Heeey, it's not your turn!")
 
-    def winner(self):
-        winning_combinations = [['A1', 'B1', 'C1'], ['A2', 'B2', 'C2'],
-                                ['A3', 'B3', 'C3'], ['A1', 'A2', 'A3'],
-                                ['B1', 'B2', 'B3'], ['C1', 'C2', 'C3'],
-                                ['A1', 'B2', 'C3'], ['C1', 'B2', 'A3']]
+        self._last = value
+        self._board[key] = value
+        self.__winner()
 
+    def __winner(self):
         def all_equal(list):
-            return list == [list[0]] * len(list)
+            return list[0] != self.EMPTY and list == [list[0]] * len(list)
 
-        for combination in winning_combinations:
-            if (self.board[combination[0]] != ' ' and
-                all_equal([self.board[i] for i in combination]) and
-                    self.status == 'Game in progress.'):
-                self.status = '%s wins!' % self.board[combination[0]]
+        if self._status == self.STATUS_GAME_IN_PROGRESS:
+            for combination in self.WINNING_COMBINATIONS:
+                if all_equal([self._board[i] for i in combination]):
+                    if self._board[combination[0]] == self.X_SIGN:
+                        self._status = self.STATUS_X_WINS
+                    else:
+                        self._status = self.STATUS_O_WINS
 
-    def game_in_progress(self):
-        for key, value in self.board.items():
-            if value == ' ':
-                return True
-        return False
+    def __moves(self):
+        return self.EMPTY in self._board.values()
 
     def game_status(self):
-        if (self.status != 'X wins!' and self.status != 'O wins!' and
-                not self.game_in_progress()):
-            self.status = 'Draw!'
-        return self.status
+        if self._status == self.STATUS_GAME_IN_PROGRESS and not self.__moves():
+            self._status = self.STATUS_DRAW
+
+        return self._status
