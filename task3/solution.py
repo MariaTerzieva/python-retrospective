@@ -3,19 +3,19 @@ class Person:
         self.name = name
         self.gender = gender
         self.birth_year = birth_year
-        self.parents = (mother, father)
-        self.kids = []
+        self._parents = (mother, father)
+        self._kids = []
 
-        for parent in self.parents:
+        for parent in self._parents:
             if parent is not None:
                 parent.__add_child(self)
 
     def __add_child(self, child):
-        return self.kids.append(child)
+        return self._kids.append(child)
 
     def __get_siblings(self, gender):
-        siblings_plus_self = set([person for parent in self.parents
-                                  for person in parent.children(gender)])
+        siblings_plus_self = {person for parent in self._parents
+                              for person in parent.children(gender)}
         return list(siblings_plus_self - {self})
 
     def get_brothers(self):
@@ -26,9 +26,9 @@ class Person:
 
     def children(self, gender=None):
         if gender is not None:
-            return [kid for kid in self.kids if kid.gender == gender]
+            return [kid for kid in self._kids if kid.gender == gender]
         else:
-            return self.kids
+            return self._kids
 
     def is_direct_successor(self, person):
-        return self in person.parents
+        return self in person._parents
