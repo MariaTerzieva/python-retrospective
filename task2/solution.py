@@ -2,6 +2,7 @@ from collections import defaultdict, OrderedDict
 
 
 def groupby(func, seq):
+    """Apply  `func` to `seq` elements and group by result"""
     result = defaultdict(list)
 
     for element in seq:
@@ -15,6 +16,7 @@ def compose(func1, func2):
 
 
 def iterate(func):
+    """Create function generator that iterates `func`."""
     iterated_function = lambda arg: arg
 
     while True:
@@ -23,6 +25,11 @@ def iterate(func):
 
 
 def zip_with(func, *iterables):
+    """Create a function generator that returns a sequence of elements,
+    where each element is the result of `func` applied to the corresponding
+    elemens of all `iterables`.
+
+    """
     for args in zip(*iterables):
         yield func(*args)
 
